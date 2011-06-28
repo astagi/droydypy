@@ -1,0 +1,24 @@
+Droydypy 1.0 : a port of Tinypy v1.1stable on Android devices
+Find Tinypy at http://code.google.com/p/tinypy/
+Find Droydypy at https://github.com/4ndreaSt4gi/droydypy
+
+Droydypy depends on:
+- python (just for bootstrapping)
+- android ndk
+- Android Debug Bridge (adb)
+
+Build and try Droydypy following these steps:
+
+1. Configure file setup_cfg.py (I've left my setting as an example)
+
+2. Make these commands to build and install:
+
+    $ python setup.py build
+    $ python setup.py devices (if you want to know what devices are attached)
+    $ python setup.py install your_device_serial dest_path
+
+3. Now you can try Tinypy on your device:
+
+    $ python setup.py shell your_device_serial
+    $ # cd dest_path
+    $ # ./tinypy hello.py
