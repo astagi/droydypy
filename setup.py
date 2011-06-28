@@ -6,7 +6,7 @@ from setup_cfg import *
 VARS = {}
 TOPDIR = os.path.abspath(os.path.dirname(__file__))
 CLEAN = False
-CORE = ['tokenize','parse','encode','py2bc']
+CORE = ['tokenize', 'parse', 'encode', 'py2bc']
 MODULES = []
 
 def main():
@@ -54,23 +54,23 @@ Modules:
 
 """
 def list_devs():
-    do_cmd(ANDROID_ADB + " devices", "#Fetching devices..")
+    do_cmd(ANDROID_ADB + " devices",  "#Fetching devices..")
 
 def shell_dev():
     device = sys.argv[2]
-    do_cmd(ANDROID_ADB + " -s " + device + " shell", "#Opening " + device + "..")
+    do_cmd(ANDROID_ADB + " -s " + device + " shell",  "#Opening " + device + "..")
 
 def install_all():
-    build = os.path.join(TOPDIR, "build")
+    build = os.path.join(TOPDIR,  "build")
     device = sys.argv[2]
     dest = sys.argv[3]
-    do_cmd(ANDROID_ADB + " -s " + device + " push " + build + " " + dest, "#Installing..")
+    do_cmd(ANDROID_ADB + " -s " + device + " push " + build + " " + dest,  "#Installing..")
 
-def do_cmd(cmd, altxt = None):
-    for k,v in VARS.items():
-        cmd = cmd.replace(k,v)
+def do_cmd(cmd,  altxt = None):
+    for k, v in VARS.items():
+        cmd = cmd.replace(k, v)
     if '$' in cmd:
-        print 'vars_error',cmd
+        print 'vars_error', cmd
         sys.exit(-1)
     
     if altxt == None:
@@ -79,51 +79,54 @@ def do_cmd(cmd, altxt = None):
         print altxt
     r = os.system(cmd)
     if r:
-        print 'exit_status',r
+        print 'exit_status', r
         sys.exit(r)
         
 def do_chdir(dest):
-    print 'cd',dest
+    print 'cd', dest
     os.chdir(dest)
 
 def build_bc(opt=False):
     out = []
     for mod in CORE:
         out.append("""unsigned char tp_%s[] = {"""%mod)
-        fname = mod+".tpc"
-        data = open(fname,'rb').read()
+        fname = mod + ".tpc"
+        data = open(fname, 'rb').read()
         cols = 16
-        for n in xrange(0,len(data),cols):
-            out.append(",".join([str(ord(v)) for v in data[n:n+cols]])+',')
+        for n in xrange(0, len(data), cols):
+            out.append(", ".join([str(ord(v)) for v in data[n:n+cols]])+', ')
         out.append("""};""")
     out.append("")
-    f = open('bc.c','wb')
+    f = open('bc.c', 'wb')
     f.write('\n'.join(out))
     f.close()
                     
-def py2bc(cmd,mod):
+def py2bc(cmd, mod):
     src = '%s.py'%mod
     dest = '%s.tpc'%mod
     if CLEAN or not os.path.exists(dest) or os.stat(src).st_mtime > os.stat(dest).st_mtime:
-        cmd = cmd.replace('$SRC',src)
-        cmd = cmd.replace('$DEST',dest)
+        cmd = cmd.replace('$SRC', src)
+        cmd = cmd.replace('$DEST', dest)
         do_cmd(cmd)
     else:
-        print '#',dest,'is up to date'
+        print '#', dest, 'is up to date'
 
-def gcc_cmd(olevel, cfile, outfile):
+def gcc_cmd(olevel,  cfile,  outfile):
     cmd = ANDROID_GCC + " -Wall " + olevel + " -g " + cfile + " -I" + ANDROID_INCLUDE + " -L"
     cmd += ANDROID_LIB + " -nostdlib " + ANDROID_LIB + "crtbegin_dynamic.o" + " -lc -ldl -lm -o " + outfile
     return cmd
 
 def build_gcc():
     mods = CORE[:]
-    do_chdir(os.path.join(TOPDIR,'tinypy'))
-    build_bc(True)
+    os.mkdir(os.path.join(TOPDIR, "build"))
+    do_chdir(os.path.join(TOPDIR, 'tinypy'))
 
     for mod in mods:
-        py2bc('python py2bc.py $SRC $DEST -nopos',mod)
-    do_cmd(gcc_cmd("", "mymain.c", "../build/tinypy"), "#Compiling tinypy for Android...")
+        py2bc('python py2bc.py $SRC $DEST -nopos', mod)
+
+    build_bc(True)
+
+    do_cmd(gcc_cmd("",  "mymain.c",  "../build/tinypy"),  "#Compiling tinypy for Android...")
     do_chdir('..')
 
     print("# OK")
@@ -136,32 +139,32 @@ def get_libs():
     MODULES = modules
 
 def build_mymain():
-    src = os.path.join(TOPDIR,'tinypy','tpmain.c')
-    out = open(src,'r').read()
-    dest = os.path.join(TOPDIR,'tinypy','mymain.c')
+    src = os.path.join(TOPDIR, 'tinypy', 'tpmain.c')
+    out = open(src, 'r').read()
+    dest = os.path.join(TOPDIR, 'tinypy', 'mymain.c')
         
     vs = []
     for m in MODULES:
         vs.append('#include "../modules/%s/init.c"'%m)
-    out = out.replace('/* INCLUDE */','\n'.join(vs))
+    out = out.replace('/* INCLUDE */', '\n'.join(vs))
     
     vs = []
     for m in MODULES:
         vs.append('%s_init(tp);'%m)
-    out = out.replace('/* INIT */','\n'.join(vs))
+    out = out.replace('/* INIT */', '\n'.join(vs))
     
-    f = open(dest,'w')
+    f = open(dest, 'w')
     f.write(out)
     f.close()
     return True
 
 def shrink(fname):
-    f = open(fname,'r'); lines = f.readlines(); f.close()
+    f = open(fname, 'r'); lines = f.readlines(); f.close()
     out = []
     fixes = [
-    'vm','gc','params','STR',
-    'int','float','return','free','delete','init',
-    'abs','round','system','pow','div','raise','hash','index','printf','main']
+    'vm', 'gc', 'params', 'STR', 
+    'int', 'float', 'return', 'free', 'delete', 'init', 
+    'abs', 'round', 'system', 'pow', 'div', 'raise', 'hash', 'index', 'printf', 'main']
     passing = False
     for line in lines:
         #quit if we've already converted
@@ -170,7 +173,7 @@ def shrink(fname):
         #change "    " into "\t" and remove blank lines
         if len(line.strip()) == 0: continue
         line = line.rstrip()
-        l1,l2 = len(line),len(line.lstrip())
+        l1, l2 = len(line), len(line.lstrip())
         line = "\t"*((l1-l2)/4)+line.lstrip()
         
         #remove comments
@@ -190,26 +193,26 @@ def shrink(fname):
         
         #remove the "namespace penalty" from tinypy ...
         for name in fixes:
-            line = line.replace('TP_'+name,'t'+name)
-            line = line.replace('tp_'+name,'t'+name)
-        line = line.replace('TP_','')
-        line = line.replace('tp_','')
+            line = line.replace('TP_'+name, 't'+name)
+            line = line.replace('tp_'+name, 't'+name)
+        line = line.replace('TP_', '')
+        line = line.replace('tp_', '')
         
         out.append(line)
     return '\n'.join(out)+'\n'
     
 def chksize():
-    t1,t2 = 0,0
+    t1, t2 = 0, 0
     for fname in [
-        'tokenize.py','parse.py','encode.py','py2bc.py',
-        'tp.h','list.c','dict.c','misc.c','string.c','builtins.c',
-        'gc.c','ops.c','vm.c','tp.c','tpmain.c',
+        'tokenize.py', 'parse.py', 'encode.py', 'py2bc.py', 
+        'tp.h', 'list.c', 'dict.c', 'misc.c', 'string.c', 'builtins.c', 
+        'gc.c', 'ops.c', 'vm.c', 'tp.c', 'tpmain.c', 
         ]:
-        fname = os.path.join(TOPDIR,'tinypy',fname)
-        f = open(fname,'r'); t1 += len(f.read()); f.close()
+        fname = os.path.join(TOPDIR, 'tinypy', fname)
+        f = open(fname, 'r'); t1 += len(f.read()); f.close()
         txt = shrink(fname)
         t2 += len(txt)
-    print "#",t1,t2,t2-65536
+    print "#", t1, t2, t2-65536
     return t2
 
 

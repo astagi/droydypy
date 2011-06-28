@@ -1,0 +1,4 @@
+*.pyc
+*.tpc
+build/
+tinypy/bc.c
