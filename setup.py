@@ -1,15 +1,55 @@
 import os
 import sys
 
-from setup_cfg import *
-
 VARS = {}
 TOPDIR = os.path.abspath(os.path.dirname(__file__))
 CLEAN = False
 CORE = ['tokenize', 'parse', 'encode', 'py2bc']
 MODULES = []
+CONFIGURED = False
+
+def create_cfg_file():
+
+    cfg_content = '#EDIT THIS FILE. VALUES ARE ONLY EXAMPLES\n'
+    cfg_content += '#Installation.\n'
+    cfg_content += 'ANDROID_SDK_PATH = "/home/andrea/android-sdk-linux_x86/"\n'
+    cfg_content += '\n'
+    cfg_content += '#Setup.py\n'
+    cfg_content += 'ANDROID_GCC = "/home/andrea/android-ndk-r5c/toolchains/arm-linux-androideabi-4.4.3/prebuilt/linux-x86/bin/arm-linux-androideabi-gcc"\n'
+    cfg_content += 'ANDROID_LIB = "/home/andrea/android-ndk-r5c/platforms/android-9/arch-arm/usr/lib/"\n'
+    cfg_content += 'ANDROID_INCLUDE = "/home/andrea/android-ndk-r5c/platforms/android-9/arch-arm/usr/include/"\n'
+    cfg_content += 'ANDROID_ADB = "/home/andrea/android-sdk-linux_x86/platform-tools/adb"\n'
+
+    f = open(os.path.join(TOPDIR, "setup_cfg.py"), "w")
+    f.write(cfg_content)
+    f.close()
+
+
+def verify_cfg():
+
+    cfg_list= [ANDROID_SDK_PATH, ANDROID_GCC, ANDROID_LIB, ANDROID_INCLUDE, ANDROID_ADB]
+
+    for cfg_path in cfg_list:
+        if not os.path.exists(cfg_path):
+            print "Unable to find this path: %s" % cfg_path
+            return False
+
+    return True
+
+
+try:
+    from setup_cfg import *
+    CONFIGURED = verify_cfg()
+except ImportError:
+    create_cfg_file()
+    print "setup_cfg.py has been created. Please, edit it and retry"
 
 def main():
+
+    if not CONFIGURED:
+        print "Setup cannot be launched yet."
+        return 1
+
     chksize()
     if len(sys.argv) < 2:
         print HELP
@@ -53,6 +93,8 @@ Modules:
     math - build math module
 
 """
+
+
 def list_devs():
     do_cmd(ANDROID_ADB + " devices",  "#Fetching devices..")
 
@@ -118,7 +160,12 @@ def gcc_cmd(olevel,  cfile,  outfile):
 
 def build_gcc():
     mods = CORE[:]
-    os.mkdir(os.path.join(TOPDIR, "build"))
+
+    try:
+        os.mkdir(os.path.join(TOPDIR, "build"))
+    except OSError:
+        print "Folder just exists.."
+
     do_chdir(os.path.join(TOPDIR, 'tinypy'))
 
     for mod in mods:
