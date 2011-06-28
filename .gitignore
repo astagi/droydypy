@@ -2,3 +2,4 @@
 *.tpc
 build/
 tinypy/bc.c
+setup_cfg.py
